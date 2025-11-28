@@ -17,7 +17,9 @@ This project demonstrates a production-ready MLOps pipeline that includes:
 Binary classification on the Iris dataset using a Random Forest Classifier to predict iris species.
 
 **Dataset**: Iris (150 samples, 4 features, 3 classes)
+
 **Model**: Random Forest Classifier
+
 **Metrics**: Accuracy, F1-Score, Confusion Matrix, Feature Importance
 
 ---
