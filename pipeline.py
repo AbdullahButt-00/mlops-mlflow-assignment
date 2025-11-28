@@ -5,6 +5,11 @@ extract_data -> preprocess_data -> train_model -> evaluate_model
 """
 import mlflow
 import os
+import sys
+
+# Add src to path for imports
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 from src.steps.extract_data import extract_data
 from src.steps.preprocess import preprocess_data
 from src.steps.train import train_model
