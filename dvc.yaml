@@ -1,0 +1,40 @@
+stages:
+  extract:
+    cmd: python -c "from src.steps.extract_data import extract_data; extract_data()"
+    deps:
+      - src/steps/extract_data.py
+    outs:
+      - data/raw/iris.csv:
+          cache: true
+
+  preprocess:
+    cmd: python -c "from src.steps.preprocess import preprocess_data; preprocess_data()"
+    deps:
+      - data/raw/iris.csv
+      - src/steps/preprocess.py
+    outs:
+      - data/processed/train.csv:
+          cache: true
+      - data/processed/test.csv:
+          cache: true
+      - data/processed/scaler.pkl:
+          cache: true
+
+  train:
+    cmd: python -c "from src.steps.train import train_model; train_model()"
+    deps:
+      - data/processed/train.csv
+      - src/steps/train.py
+    outs:
+      - models/random_forest_model.pkl:
+          cache: true
+
+  evaluate:
+    cmd: python -c "from src.steps.evaluate import evaluate_model; evaluate_model()"
+    deps:
+      - models/random_forest_model.pkl
+      - data/processed/test.csv
+      - src/steps/evaluate.py
+    outs:
+      - outputs/confusion_matrix.png
+      - outputs/feature_importance.png
