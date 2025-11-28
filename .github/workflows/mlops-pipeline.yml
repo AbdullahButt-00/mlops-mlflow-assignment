@@ -43,14 +43,37 @@ jobs:
         pytest tests/ -v --tb=short 2>/dev/null || echo "No tests found, skipping..."
       continue-on-error: true
     
-    - name: Initialize DVC
+    - name: Create DVC directories
       run: |
-        dvc init --no-scm
-        dvc remote add -d local dvc_remote
+        mkdir -p dvc_remote
+        mkdir -p data/raw data/processed
+        mkdir -p models outputs
+    
+    - name: Initialize DVC (skip if already initialized)
+      run: |
+        if [ ! -d ".dvc" ]; then
+          dvc init --no-scm
+          dvc remote add -d local dvc_remote
+        else
+          echo "DVC already initialized"
+        fi
+      continue-on-error: true
     
     - name: Run MLflow Pipeline
       run: |
         python pipeline.py
+    
+    - name: Display Pipeline Output
+      if: always()
+      run: |
+        echo "=== Data Files ===" 
+        ls -lah data/ 2>/dev/null || echo "data/ directory not found"
+        echo ""
+        echo "=== Model Files ===" 
+        ls -lah models/ 2>/dev/null || echo "models/ directory not found"
+        echo ""
+        echo "=== Output Plots ===" 
+        ls -lah outputs/ 2>/dev/null || echo "outputs/ directory not found"
     
     - name: Upload MLflow artifacts
       if: always()
@@ -61,6 +84,15 @@ jobs:
           outputs/
           models/
           data/processed/
+        if-no-files-found: warn
+    
+    - name: Upload MLflow tracking directory
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: mlflow-runs
+        path: mlruns/
+        if-no-files-found: warn
     
     - name: Display Pipeline Summary
       if: success()
