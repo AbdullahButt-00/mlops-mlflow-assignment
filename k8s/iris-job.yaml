@@ -1,0 +1,23 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: iris-pipeline-job
+spec:
+  template:
+    spec:
+      containers:
+      - name: iris-pipeline
+        image: iris-mlops:latest
+        imagePullPolicy: Never
+        volumeMounts:
+        - name: dvc-storage
+          mountPath: /app/dvc_remote
+        - name: outputs
+          mountPath: /app/outputs
+      volumes:
+      - name: dvc-storage
+        emptyDir: {}
+      - name: outputs
+        emptyDir: {}
+      restartPolicy: Never
+  backoffLimit: 3
