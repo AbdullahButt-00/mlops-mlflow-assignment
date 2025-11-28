@@ -217,35 +217,41 @@ Each nested run logs:
 The GitHub Actions workflow runs on:
 - **Push** to `main` or `develop` branches
 - **Pull Requests** to `main` or `develop`
-- **Manual trigger** (workflow_dispatch)
+- **Manual trigger** (`workflow_dispatch`)
 
 ### Pipeline Stages
 
 1. **Environment Setup**
-   - Checkout code
-   - Install Python 3.10
-   - Install dependencies from requirements.txt
-   - Cache pip packages
+   - Checkout code (`actions/checkout@v4`)
+   - Install Python 3.10 (`actions/setup-python@v5`)
+   - Install dependencies from `requirements.txt`
+   - Cache pip packages for faster builds
 
 2. **Code Quality (Linting)**
-   - Run pylint on `src/` directory
-   - Non-blocking (continues on failure)
+   - Run `pylint` on `src/` directory
+   - Non-blocking (continues even if lint fails)
 
 3. **Testing**
-   - Run pytest (if tests exist)
-   - Non-blocking (continues on failure)
+   - Run `pytest` on `tests/` directory
+   - Non-blocking (continues even if tests are missing or fail)
 
 4. **DVC Setup**
-   - Initialize DVC with local remote storage
-   - Create `dvc_remote` directory
+   - Create DVC directories (`data/raw`, `data/processed`, `models`, `outputs`, `dvc_remote`)
+   - Initialize DVC with local remote (`dvc init --no-scm`)
+   - Skip if already initialized
 
 5. **Pipeline Execution**
    - Run the full MLOps pipeline: `python pipeline.py`
-   - Execute all 4 steps (extract, preprocess, train, evaluate)
+   - Executes all 4 steps:
+     1. **Extract Data** → CSV saved to `data/raw/`
+     2. **Preprocess** → train/test splits & scaler saved to `data/processed/` and `preprocessor/`
+     3. **Train Model** → RandomForest saved to `models/`
+     4. **Evaluate** → Metrics computed and plots saved in `outputs/`
+   - Logs parameters, metrics, and artifacts to MLflow
 
 6. **Artifact Upload**
-   - Upload outputs to GitHub Actions artifacts
-   - Download via Actions tab → artifacts
+   - Upload pipeline outputs (`models/`, `outputs/`, `data/processed/`) and MLflow tracking directory (`mlruns/`) as GitHub Actions artifacts
+   - Download via Actions tab → Artifacts
 
 ### Trigger a Workflow Run
 
@@ -312,31 +318,6 @@ minikube version  # Verify installation
 ### Create Kubernetes Manifests
 
 **k8s/iris-job.yaml**
-```yaml
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name: iris-pipeline-job
-spec:
-  template:
-    spec:
-      containers:
-      - name: iris-pipeline
-        image: iris-mlops:latest
-        imagePullPolicy: Never
-        volumeMounts:
-        - name: dvc-storage
-          mountPath: /app/dvc_remote
-        - name: outputs
-          mountPath: /app/outputs
-      volumes:
-      - name: dvc-storage
-        emptyDir: {}
-      - name: outputs
-        emptyDir: {}
-      restartPolicy: Never
-  backoffLimit: 3
-```
 
 ### Deploy to Minikube
 ```bash
@@ -511,4 +492,3 @@ This project is part of an educational MLOps assignment.
 
 ---
 
-**Happy MLOps! 🚀**
